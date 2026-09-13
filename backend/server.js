@@ -28,6 +28,17 @@ mongoose.connect(process.env.MONGO_URI, {
     }
 })
 
+//health endpoint used by Docker and deployment pipelines
+app.get("/health", (req, res) => {
+    const databaseReady = mongoose.connection.readyState === 1
+
+    res.status(databaseReady ? 200 : 503).json({
+        status: databaseReady ? "ok" : "degraded",
+        database: databaseReady ? "connected" : "disconnected",
+        uptime: process.uptime()
+    })
+})
+
 //api endpoints
 app.use("/api/user", userRouter)
 app.use("/api/task", taskRouter)
