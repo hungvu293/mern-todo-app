@@ -1,0 +1,20 @@
+groups:
+  - name: application-alerts
+    rules:
+      - alert: ApplicationDown
+        expr: probe_success == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Application endpoint is unavailable"
+          description: "{{ $labels.instance }} has been unavailable for one minute."
+
+      - alert: MonitoringTargetDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Prometheus target is unavailable"
+          description: "{{ $labels.instance }} in job {{ $labels.job }} is down."
