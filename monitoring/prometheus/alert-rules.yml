@@ -1,20 +1,20 @@
 groups:
-  - name: application-alerts
+  - name: system-resource-alerts
     rules:
-      - alert: ApplicationDown
-        expr: probe_success == 0
-        for: 1m
-        labels:
-          severity: critical
-        annotations:
-          summary: "Application endpoint is unavailable"
-          description: "{{ $labels.instance }} has been unavailable for one minute."
-
-      - alert: MonitoringTargetDown
-        expr: up == 0
-        for: 1m
+      - alert: HighCpuUsage
+        expr: 100 * (1 - avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m]))) > 80
+        for: 5m
         labels:
           severity: warning
         annotations:
-          summary: "Prometheus target is unavailable"
-          description: "{{ $labels.instance }} in job {{ $labels.job }} is down."
+          summary: "CPU usage is high"
+          description: "CPU usage on {{ $labels.instance }} has exceeded 80% for five minutes."
+
+      - alert: HighMemoryUsage
+        expr: 100 * (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Memory usage is high"
+          description: "Memory usage on {{ $labels.instance }} has exceeded 80% for five minutes."

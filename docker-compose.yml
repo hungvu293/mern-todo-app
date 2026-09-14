@@ -32,8 +32,7 @@ services:
       - ./monitoring/prometheus/alert-rules.yml:/etc/prometheus/alert-rules.yml:ro
       - prometheus_data:/prometheus
     depends_on:
-      - blackbox-exporter
-      - alertmanager
+      - node-exporter
 
   grafana:
     image: grafana/grafana:12.1
@@ -45,17 +44,14 @@ services:
     depends_on:
       - prometheus
 
-  blackbox-exporter:
-    image: prom/blackbox-exporter:latest
-    ports:
-      - "9115:9115"
-
-  alertmanager:
-    image: prom/alertmanager:latest
-    ports:
-      - "9093:9093"
+  node-exporter:
+    image: quay.io/prometheus/node-exporter:v1.10.2
+    command:
+      - "--path.rootfs=/host"
+    pid: host
+    restart: unless-stopped
     volumes:
-      - ./monitoring/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - "/:/host:ro"
 
 volumes:
   mongo_data:

@@ -1,0 +1,55 @@
+---
+- name: Install and deploy MERN Todo application
+  hosts: all
+  become: true
+
+  vars:
+    repository_url: https://github.com/hungvu293/mern-todo-app.git
+    application_path: /opt/mern-todo-app
+    jwt_secret: "{{ lookup('env', 'JWT_SECRET') | default('change-this-secret', true) }}"
+    gmail_username: "{{ lookup('env', 'GMAIL_USERNAME') | default('', true) }}"
+    gmail_password: "{{ lookup('env', 'GMAIL_PASSWORD') | default('', true) }}"
+
+  tasks:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+
+    - name: Install Git, Docker and Docker Compose
+      ansible.builtin.apt:
+        name:
+          - git
+          - docker.io
+          - docker-compose-v2
+        state: present
+
+    - name: Start Docker
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Clone or update project source
+      ansible.builtin.git:
+        repo: "{{ repository_url }}"
+        dest: "{{ application_path }}"
+        version: main
+        update: true
+
+    - name: Create backend environment file
+      ansible.builtin.copy:
+        dest: "{{ application_path }}/backend/.env"
+        mode: "0600"
+        content: |
+          MONGO_URI=mongodb://mongodb:27017/todo
+          GMAIL_USERNAME={{ gmail_username }}
+          GMAIL_PASSWORD={{ gmail_password }}
+          PORT=8000
+          JWT_SECRET={{ jwt_secret }}
+          FRONTEND_URL=http://{{ inventory_hostname }}:3000
+      no_log: true
+
+    - name: Build and start application with Docker Compose
+      ansible.builtin.command:
+        cmd: docker compose up -d --build
+        chdir: "{{ application_path }}"
